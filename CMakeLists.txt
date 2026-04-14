@@ -1,5 +1,5 @@
 # judge which cmake codes to use 
-if(ROS_EDITION STREQUAL "ROS1")
+if($ENV{ROS_VERSION} STREQUAL "ROS1")
 
   # Copyright(c) 2019 livoxtech limited.
 
@@ -184,7 +184,7 @@ if(ROS_EDITION STREQUAL "ROS1")
   #---------------------------------------------------------------------------------------
 
 
-else(ROS_EDITION STREQUAL "ROS2")
+else($ENV{ROS_VERSION} STREQUAL "ROS2")
 
   # Copyright(c) 2020 livoxtech limited.
 
@@ -281,15 +281,18 @@ else(ROS_EDITION STREQUAL "ROS2")
 
   target_include_directories(${PROJECT_NAME} PRIVATE ${livox_sdk_INCLUDE_DIRS})
 
-  # get include directories of custom msg headers
-  if(HUMBLE_ROS STREQUAL "humble")
-    rosidl_get_typesupport_target(cpp_typesupport_target
+  # Link the generated message typesupport into the driver target.
+  # Newer ROS 2 distros expose the generated headers transitively via the
+  # linked rosidl targets, so we only add explicit include paths when they are
+  # actually reported by the target.
+  rosidl_get_typesupport_target(LIVOX_INTERFACE_TARGET
     ${LIVOX_INTERFACES} "rosidl_typesupport_cpp")
-    target_link_libraries(${PROJECT_NAME} "${cpp_typesupport_target}")
-  else()
-    set(LIVOX_INTERFACE_TARGET "${LIVOX_INTERFACES}__rosidl_typesupport_cpp")
-    add_dependencies(${PROJECT_NAME} ${LIVOX_INTERFACES})
-    get_target_property(LIVOX_INTERFACES_INCLUDE_DIRECTORIES ${LIVOX_INTERFACE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+  add_dependencies(${PROJECT_NAME} ${LIVOX_INTERFACES})
+
+  if(TARGET ${LIVOX_INTERFACE_TARGET})
+    get_target_property(LIVOX_INTERFACES_INCLUDE_DIRECTORIES
+      ${LIVOX_INTERFACE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+    target_link_libraries(${PROJECT_NAME} "${LIVOX_INTERFACE_TARGET}")
   endif()
 
   # include file direcotry
@@ -297,15 +300,19 @@ else(ROS_EDITION STREQUAL "ROS2")
     ${PCL_INCLUDE_DIRS}
     ${APR_INCLUDE_DIRS}
     ${LIVOX_LIDAR_SDK_INCLUDE_DIR}
-    ${LIVOX_INTERFACES_INCLUDE_DIRECTORIES}   # for custom msgs
     3rdparty
     src
   )
 
+  if(LIVOX_INTERFACES_INCLUDE_DIRECTORIES)
+    target_include_directories(${PROJECT_NAME} PUBLIC
+      ${LIVOX_INTERFACES_INCLUDE_DIRECTORIES}   # for custom msgs
+    )
+  endif()
+
   # link libraries
   target_link_libraries(${PROJECT_NAME}
     ${LIVOX_LIDAR_SDK_LIBRARY}
-    ${LIVOX_INTERFACE_TARGET}   # for custom msgs
     ${PPT_LIBRARY}
     ${Boost_LIBRARY}
     ${PCL_LIBRARIES}
