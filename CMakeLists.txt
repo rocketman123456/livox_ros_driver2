@@ -287,7 +287,7 @@ else($ENV{ROS_VERSION} STREQUAL "ROS2")
   # actually reported by the target.
   rosidl_get_typesupport_target(LIVOX_INTERFACE_TARGET
     ${LIVOX_INTERFACES} "rosidl_typesupport_cpp")
-  add_dependencies(${PROJECT_NAME} ${LIVOX_INTERFACES})
+    add_dependencies(${PROJECT_NAME} ${LIVOX_INTERFACES})
 
   if(TARGET ${LIVOX_INTERFACE_TARGET})
     get_target_property(LIVOX_INTERFACES_INCLUDE_DIRECTORIES
@@ -313,6 +313,7 @@ else($ENV{ROS_VERSION} STREQUAL "ROS2")
   # link libraries
   target_link_libraries(${PROJECT_NAME}
     ${LIVOX_LIDAR_SDK_LIBRARY}
+    ${LIVOX_INTERFACE_TARGET}   # for custom msgs
     ${PPT_LIBRARY}
     ${Boost_LIBRARY}
     ${PCL_LIBRARIES}

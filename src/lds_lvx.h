@@ -22,73 +22,47 @@
 // SOFTWARE.
 //
 
-/** Livox LiDAR data source, data from dependent lidar */
+// livox lidar lvx data source
 
-#ifndef LIVOX_ROS_DRIVER_LDS_LIDAR_H_
-#define LIVOX_ROS_DRIVER_LDS_LIDAR_H_
+#ifndef LIVOX_ROS_DRIVER_LDS_LVX_H_
+#define LIVOX_ROS_DRIVER_LDS_LVX_H_
 
 #include <memory>
-#include <mutex>
-#include <vector>
+#include <atomic>
 
 #include "lds.h"
 #include "comm/comm.h"
 
+#include "livox_lidar_api.h"
 #include "livox_lidar_def.h"
 
-#include "rapidjson/document.h"
-
 namespace livox_ros {
-
-class LdsLidar final : public Lds {
+/**
+ * Lidar data source abstract.
+ */
+class LdsLvx final : public Lds {
  public:
-  static LdsLidar *GetInstance(double publish_freq) {
-    printf("LdsLidar *GetInstance\n");
-    static LdsLidar lds_lidar(publish_freq);
-    return &lds_lidar;
+  static LdsLvx *GetInstance(double publish_freq) {
+    static LdsLvx lds_lvx(publish_freq);
+    return &lds_lvx;
   }
 
-  bool InitLdsLidar(const std::string& path_name);
-  bool Start();
-
-  int DeInitLdsLidar(void);
+  int Init(const char *lvx_path);
+  
+  void ReadLvxFile();
+ 
  private:
-  LdsLidar(double publish_freq);
-  LdsLidar(const LdsLidar &) = delete;
-  ~LdsLidar();
-  LdsLidar &operator=(const LdsLidar &) = delete;
+  LdsLvx(double publish_freq);
+  LdsLvx(const LdsLvx &) = delete;
+  ~LdsLvx();
+  LdsLvx &operator=(const LdsLvx &) = delete;
 
-  bool ParseSummaryConfig();
-
-  bool InitLidars();
-  bool InitLivoxLidar();    // for new SDK
-
-  bool LivoxLidarStart();
-
-  void ResetLdsLidar(void);
-
-  void SetLidarPubHandle();
-
-	// auto connect mode
-	void EnableAutoConnectMode(void) { auto_connect_mode_ = true; }
-  void DisableAutoConnectMode(void) { auto_connect_mode_ = false; }
-  bool IsAutoConnectMode(void) { return auto_connect_mode_; }
-
-  virtual void PrepareExit(void);
-
- public:
-  std::mutex config_mutex_;
+  static void OnPointCloudsFrameCallback(uint32_t frame_index, uint32_t total_frame, PointFrame *point_cloud_frame, void *client_data);
 
  private:
-  std::string path_;
-  LidarSummaryInfo lidar_summary_info_;
-
-  bool auto_connect_mode_;
-  uint32_t whitelist_count_;
   volatile bool is_initialized_;
-  char broadcast_code_whitelist_[kMaxLidarCount][kBroadcastCodeSize];
+  static std::atomic_bool is_file_end_;
 };
 
 }  // namespace livox_ros
-
-#endif // LIVOX_ROS_DRIVER_LDS_LIDAR_H_
+#endif
