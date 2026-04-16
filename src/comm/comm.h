@@ -25,6 +25,8 @@
 #ifndef LIVOX_ROS_DRIVER2_COMM_H_
 #define LIVOX_ROS_DRIVER2_COMM_H_
 
+#include "lidar_imu_data_queue.h"
+
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -36,7 +38,12 @@
 #include <memory>
 #include <map>
 
-#include "lidar_imu_data_queue.h"
+#include <fcntl.h>
+#include <sys/ipc.h>
+#include <sys/mman.h>
+#include <chrono>
+#include <unistd.h>
+
 
 namespace livox_ros {
 
